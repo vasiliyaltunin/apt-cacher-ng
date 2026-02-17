@@ -1,0 +1,89 @@
+Drop "curl" functionality from acngtool. As transitional solution, call
+curl/wget/http(from-apt) as client instead. Then drop DL code usage from UDS
+communication.
+
+Rewrite dlcon to run on the IO thread in async fashion. Convert it to a
+DownloadManager which steers a bunch of streams. So, a stream for each target.
+Actually the whole job queue should be handled around the stream itself. If
+some job's target is changed (rewrite, backend change), assign it to
+appropriate OTHER/NEW stream in the bundle. The job input order will implicitly
+ensure the right ordering, at worst a couple of streams for the same host are
+active, at best we get a simultaneous download from all hosts, which would
+mimick apt's own behavior WRT multiple backends.
+
+acngtool curl mode shall print error messages (from error logging) to STDERR
+
+Rewrite some client serving code to run more tasks on the IO thread, like plain
+IO passthrough (CONNECT/WEBSOCKET) parts.
+
+Rework acfg namespace (picking code from next branch) to use a smarter builder
+object.
+
+Redesign the config file format to add sections for remap-stuff instead of
+pushing everything into the same config line.  Basic idea: git-config extended
+ini format.
+
+Better cleanup for orphaned .gpg files
+
+IDEA: create a special control socket, ACLed by local permissions. Requests
+coming from there would be considered as ultimately thrusted and go directly to
+the maintenance handlers (i.e. alternative reportpage access only for local
+administrator even when report page is disabled).
+
+IDEA: a special control command for acng/acngtool to rebind local TCP interfaces.
+For https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=786717
+
+IDEA (for nextgen): pre-fallocate the subsequent block of contiguous space in
+chunks of less than 1mb size (repeatedly, when the first region was written).
+Currently only first MB is preallocated.
+
+Raw pass-throough of Location: addresses as long as they follow the minimum
+safety rules, for web services that apply strange rules WRT validation of such
+redirections (https://bugs.launchpad.net/bugs/1625928)
+
+Add a special cleanup page (or just a special mode of Expiration task which
+does not abort on errors and does not remove stuff) which focuses on the
+distro expiration issue.
+
+Add custom job trigger with a command file plus fifo file (for output). This
+might be triggered by SIGUSR2.
+
+Fix URL parser to cope with more combinations of encoded chars (specially in user:pass part)
+
+Make better secure mechanism to trigger maint jobs. The current one requires faked website authentication, etc.
+Should use local methods instead, maybe passing a config file with commands via
+filesystem which is only readable/writtable to apt-cacher-ng and push it via
+signal?
+
+Local storage of admin password shall use hashing, maybe PBKDF2 from OpenSSL
+
+Direct NTLM proxy authentication (user can use cntlm but internal solution would be nice)
+
+Investigate more on Fedora mirror management, improve mirror list generation
+
+No cancel button in attached mode of maint pages
+
+[for s.] root startup and EUID changing for privileged port use
+[maybe, what was the urgent reason again...?!] Don't die if at leat one socket was open on start. Plus, retry to open sockets on HUP. document this... ifup can send hups?!
+[debian] don't install acngfs manpage on hurd... or finally fix and build acngfs for hurd
+
+> And after a code review yesterday I think the html log is still not a
+> bad idea. It still needs some cosmetical fixes.
+It has advantages.  Would be neat if it could be served by
+http://<server ID>:3142/logs.html (or something like that).  It would
+have to generate a pick-list of the
+/var/log/apt-cacher-ng/maint_*.log.html files ...
+
+ - integrate generic mirror checker from Rakhesh
+
+ - consider creating Debian and Ubuntu security mirror setup, like:
+ Remap-ubusec: file:ubuntu_security /ubuntu-security ; http://security.ubuntu.com/ubuntu
+
+ - Document all options in the manpage (Prio: low)
+
+ - (maybe) for import: smart mirror structure discovery... if _$ARCH.deb found but no
+   binary-$ARCH data for them, try to locate binary-$ARCH folder positions in
+   the cache
+
+ - dynamic update/scrolling of the log pages
+

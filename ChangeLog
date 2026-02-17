@@ -1,0 +1,2227 @@
+apt-cacher-ng (3.7.5) EVENT-VERTICAL; urgency=low
+
+  [ BUGFIXES]
+
+  * Integer overflow in maint job scheduler, causing endless loop on 32-bit
+    architectures with 64-bit time (by Helge Deller <deller@gmx.de>)
+    https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1073970
+  * Compilation fix with STRLCPY feature not reported properly 
+  * Compilation fix with GCC-14 (stop using deprecated iterator template)
+  * Increase suicide timeout value to one hour (60s might have affected slow
+    systems, Debian bug #1006925)
+  * Support SHA256: fields for source files (by Antonio Russo,
+    Debian bug #1026848)
+  * On redirection responses, if the Location header is not a URL (i.e.
+    relative or absolute within same host), fix construction of target URL
+    (Debian bug #1074404)
+
+  [ MISCELLANEOUS]
+
+  * DB generation script updates: new Fedora locations, EPEL9 used as
+    reference, ScientificLinux removed
+  * Database update (ScientificLinux kept although EOL, considered deprecated
+    and subject to removal in future)
+  * Additional alternative identifier _apt-proxy._tcp in Avahi configuration
+    for users who reject names with multiple underscores (Debian bug#1051481)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 22 Jul 2024 17:32:12 +0200
+
+apt-cacher-ng (3.7.4) NANOTUBES-ARE-FOREVER; urgency=low
+
+  [ BUGFIXES]
+
+  * Fixing garbled Last-Modified header in certain responses
+
+  [ MISCELLANEOUS]
+
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 09 Oct 2021 12:39:30 +0200
+
+apt-cacher-ng (3.7.3) THERE-IS-NO-KNIVE; urgency=low
+
+  [ IMPROVEMENTS ]
+
+  * Maintenance tasks report HTTP errors with status code
+  * Earlier aborting of maintenance tasks when continuation would be not
+    permitted in the end anyway
+  * More aggresive default strategy for expiration of index files where the
+    remote resource disappeared (FollowIndexFileRemoval option)
+  * Add .sig suffix support for Arch Linux (Debian bug #989347)
+  * Cleanup of old empty directories
+
+  [ BUGFIXES]
+
+  * Fix premature exit of connection invocation if the first attempt happened
+    to quick, therefore leaving client thread eventually in blocked state
+    (thread leak, regression since 3.7)
+  * Fix crash in case of missing DNS data
+  * GCC 11 compilation fix (error: template-id not allowed for destructor)
+  * More smart (and partly more strict) parsing of various IPv6 IP formats in
+    URL parsing (Debian bug #994778)
+  * Fixed access URL rendering on information page (potential format errors,
+    regression since 3.7.2 due to network port type change). Also simplified
+    the format helper for better optimization by older C++ compilers.
+  * Fixed acngtool "maint" function over UNIX domain socket (more fallout from
+    port type change), also added a global timeout of 10 minutes to mitigate
+    side effects from such hangups in cron jobs.
+
+  [ MISCELLANEOUS]
+
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 09 Oct 2021 12:39:30 +0200
+
+apt-cacher-ng (3.7.2) SHIFT_HAPPENZ; urgency=high
+
+  [ BUGFIXES]
+
+  * DNS: fix potential memory corruption if the count of reported SRV hosts
+    exceeds the regular limit
+  * DNS: considers the requested name as the last target candidate if the name
+    is not among the candidates suggested by SRV record
+  * Minor portability issues (32bit and older GCC) resolved
+
+  [ IMPROVEMENTS ]
+
+  * Memory saving by using trivial data type for port specification
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 30 May 2021 20:28:21 +0200
+
+apt-cacher-ng (3.7.1) 2-WINDY-OUTSIDE; urgency=low
+
+  [ NEW FEATURES AND IMPROVEMENTS ]
+
+  * Support SRV DNS records - if they deliver alternative hostnames for the
+    initial _http._tcp.* request, consider up to five hosts specified there
+    instead of regular A/AAAA/CNAME on the hostname itself. The priorities and
+    weights are respected but the precision might vary, depending on the
+    scale of the weights. Balancing happens with random factors, and the
+    calculation results are cached for the configured DNS caching time. Also,
+    while there is fallback to normal resolution in case where SRV records
+    don't resolve in anything, there is no fallback handling when connection
+    problems are found later.
+  * Adding cdn-fastly.deb.debian.org as regular or backup mirror
+
+  [ INTERNAL REDESIGN ]
+
+  * Extracting thread pool into reusable class
+  * All source/header relocation to src folder
+
+  [ FIXING POTENTIAL 3.7 REGRESSIONS ]
+
+  * Fix linking with -DDEBUG and common code built as shared lib
+  * Fix build with -Werror (forgotten but irrelevant virtual destructor)
+  * Fix potentially incorrect behavior on shutdown while DNS resolution is
+    ongoing
+
+  [ BUGFIXES]
+
+  * Fix bad requests in case RequestAppendix contain invisible characters or
+    other garbage
+  * Drop documentation references to distkill.pl and expire-caller.pl script
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 25 May 2021 19:37:17 +0200
+
+apt-cacher-ng (3.7) AND-SOMETIMES-THE-BEAR-EATS-YOU; urgency=medium
+
+  * This is an EXPERIMENTAL version. Certain features and code changes should
+    not be consider mature. This version might make some things better than
+    3.6.x series, and some things worse, including damaging existing caches.
+
+    USE AT YOUR OWN RISK!
+    YOU HAVE BEEN WARNED!
+
+  [ BREAKING CHANGES ]
+
+  * "just cleanup" parameter -e was removed. This has been troublesome to
+    implement long time ago and is most likely not used in the wild. This
+    can be replaced easily and with better privilege separation using a
+    shell script which starts apt-cacher-ng in foreground and calls acngtool.
+  * cache processor is now more stric with regards to file metadata. Manually
+    imported files (without use of the official Import function) will no
+    longer be considered valid without at least a timestamp check on the
+    server.
+  * acngfs does not support setting of proxy server and (optional) local extra
+    folder as plain argument, instead those need to be specified as proxy=...
+    and cachedir=... .
+
+  [ BUGFIXES ]
+
+  * Fixes for potential bugfixes with error checking for corner cases all over
+    the place
+  * Cleans up with potential bug sources for incorrect transmission to the
+    client while the item content was sent to cache and to caller
+    simultaneously
+  * Fix potentially incorrect over-insisting file descriptor closing which
+    might have impacted libevent descriptors (Debian bugs #954904, #986356)
+  * Fix potentially incorrect error reporting for IPv6/IPv4 switching
+    connection attempts which eventually ended in failure (timeout, rejected)
+  * Fix missing newline when RequestAppendix header, which caused it's merging
+    with some prepending header line
+  * Better reproducible runs of DB generations (Debian bug #988976)
+
+  [ INTERNAL REFACTORING ]
+
+  * Overhauling many core components, especially download, delivery and cache
+    management code; probably the heaviest change since 2014:
+
+    a) supposedly using less CPU cycles and fewer critical sections
+    b) supposedly using less memory for regular data serving
+    c) never truncating package files, only appending
+    d) more consistent error codes
+    e) separate debug logging into apt-cacher.dbg file
+    f) precise separation into type classes of the active cache items,
+       therefore better efficiency in case of volatile/non-volatile mixup,
+       also preparing to support cached requests with protected access and
+       individual credentials (Salsa feature requests)
+    g) simplified head file storage for delivery task
+    h) adding dedicated log/err/dbg files for acngfs
+
+  * New switches to disable optional components: ENABLE_TOOLS, ENABLE_TESTS
+  * Direct linking to libfuse for acngfs is mandatory now, the dlopen path was
+    removed since libfuse2 is in wide use nowadays anyway
+
+  [ NEW FEATURES AND IMPROVEMENTS ]
+
+  * Limited support of Cache-Control header from clients (no-cache, no-store)
+    for LP: #1915713
+  * Support for open-end range requests
+  * Support regular variable assignments (like in acngtool) in acngfs command
+    line syntax, although the meanings might be slightly different (CacheDir
+    means local fallback folder)
+  * Better error messages stored in apt-cacher.err, helping to track down
+    filesystem issues
+  * Considering more than two IPs simultaneously when initiating connection,
+    and running this task on IO thread, reducing number of select() calls
+  * When recreating by-hash siblings in the archive, try to restore the
+    modification date where possible, therefore probably avoid redownloading
+    them for (rare) clients which don't follow the by-hash scheme
+
+  [ MISCELLANEOUS]
+
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 22 May 2021 14:34:51 +0200
+
+apt-cacher-ng (3.6.4) 11TH-HOUR-RELEASE; urgency=low
+
+  * Fix the premature and unsafe closing of file descriptors:
+     - registration in the graceful termination handling was not thread-safe
+     - conn objects did close the handles immediately due to incorrect use
+       of RAII helper, leading to the exact opposite of what the graceful
+       shutdown code was made for (therefore, sometimes suddenly closing
+       sockets without returning all data)
+     - even worse, the graceful shutdown code was able to randomly steal
+       data from unrelated sockets (causing data corruption even in incoming
+       data) or shutdown their stream
+     - the timeout description map was not cleaned properly, therefore
+       causing a (minor) memory leak. This is now dropped completely because
+       the timeout/event data is carried around in own metadata objects.
+  * Minor stability tweaks:
+     - drop obsolete forceclose() function which would make a pointless
+       (although harmless) close(-1) call upon EINTR result
+     - explicit checks for -1 results of open() result instead of < 0
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 30 May 2021 10:32:44 +0200
+
+apt-cacher-ng (3.6.3) SOHMIETNG-T0-REBMEMER; urgency=medium
+
+  * Amend the file creation scheme for cache files which are rewritten from
+    the beginning, avoiding need for truncation of open files while
+    downloading, therefore avoiding potential termination from mmap triggered
+    SIGBUS (for example in case of maintenance job processing)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 08 Mar 2021 22:15:48 +0100
+
+apt-cacher-ng (3.6.2) THIS-ONE-WILL-FLY; urgency=medium
+
+  * Dynamic detection of changes of resolv.conf file (again for Debian
+    bug #951005)
+  * Make sure to send event_base_loopbreak in the context of the libevent
+    thread (closes hanging of acngtool on exit, Debian bug #977611)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 03 Mar 2021 21:32:18 +0100
+
+apt-cacher-ng (3.6.1) THERE-IS-NO-FREE-BRUNCH; urgency=low
+
+  * Minor bugfix and update verion
+  * Avoid potential file descriptor leak in download item collision handling,
+    also various improvements around stale handle detection and resolution of
+    this situation
+  * Extended mirror scan to guess {ftp2, ftp3}.XY.debian.org address aliases
+    (Debian bug #951005)
+  * Extended security.debian.org rewriting to also include deb.debian.org
+    requests and change default mirror for them all to deb.debian.org (Debian
+    bugs #932093, previously #884881)
+  * Fixes potential hanging at the end of download job execution in acngtool
+    (possibly responsible for various Debian bugs)
+  * Workaround for libevent issue with systems having local nameserver and not
+    having nameserver entries in resolv.conf, also adding a couple of
+    "undocumented" Debug options for further investigation (EvDnsResolvConf,
+    EvDnsOpts). For debian bug #982984.
+  * More ACID-like handling of metadata storing when a download starts
+  * Now not destroying the fileitem when aborting on late errors (where risk
+    is compensated by the new metadata behavior) but letting the user know that
+    something is wrong with the filesystem (Salsa issue #9); also dropped the
+    fstat check (triggering "Inconsistent file state" message) because it's
+    intended task is taken over by the subsequent lseek check with SEEK_END,
+    this also should reveal faulty filesystem behavior.
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 25 Feb 2021 22:50:41 +0100
+
+apt-cacher-ng (3.6) SOMETIMES-YOU-EAT-THE-BEAR; urgency=low
+
+  * Allowed specification of different/multiple endpoints to bind with
+    arbitrary ports, i.e. binding with non-default port on specific network interfaces
+  * Admin pages refer to the locally served location of the manual (via
+    built-in webserver)
+  * Fixing construction of request specific X-Forwarded-For headers. This
+    matters only for proxy cascades and only when ExposeOrigin option is set.
+  * Potential hanging of acngtool/acngfs on termination
+  * Fixed potential deadlock in index file processing in maintenance job (only
+    when checksumming was enabled)
+  * Minor speedup in acngfs with reused download agent
+  * Using asynchronous libevent DNS resolver instead of getaddrinfo from OS,
+    since the later turned out to be unreliable in stress tests
+  * Safely ignore the HTTP 102 Processing status code and similar hints 
+  * In case of stuck/creeping download of volatile files, move them out of the
+    way faster and easier (replacing file entry) instead of moving them to a
+    side cache
+  * Fixed error message selection for early fatal SSL errors
+  * Fixed pdiff algorithm to use now available combined patches directly
+  * Vastly improved the CPU consumption of pdiff patching code in acngtool
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 07 Feb 2021 22:30:55 +0100
+
+apt-cacher-ng (3.5) CLOUDY-WITH-A-CHANCE-OF-VEGGIE-BURGERS; urgency=medium
+
+  * Faster stop of progress observers on maintenance tasks
+  * Avoid earlier stop on download errors in expirations, so all files for
+    expired distros can be easily cleaned manually in one or two runs instead
+    of multiple runs
+  * Automatic blocking of IPv6 connection attempts in case of too many failed
+    attempts (where IPv4 was still working) and vice versa
+
+  [ Various bugfixes]
+  * Data race in DNS result caching, sometimes resulting incorrect resolution
+    error reports and/or marking backends bad temporarily
+  * Added little progress hints in expiration job, so that browsers don't
+    close the connection due to suspected timeout
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 20 Apr 2020 23:33:27 +0200
+
+apt-cacher-ng (3.4) ALTERED-HYDROGEN; urgency=low
+
+  [ Various bugfixes]
+
+  * potential fix for a programming bug where a bad redirection was reported
+    although the source was rewritten correctly (Debian bug 952811)
+  * potential fix for SHA512 related problems (the considered string length
+    was too short which might break comparisons on file import and validation)
+  * Fix bug of the incoming connection thread pool, sometimes not starting IO
+    processing immediately due to miscalculation of required worker thread
+    count. Apparently a regression since version 3.3.
+
+  [ For single request Pass-Through mode (DontCache rule) ]
+
+  * Fix response body corruption in pass-through items
+  * Partial support for directory listing (PT, no caching yet)
+  * Permit non-categorized file extensions when PT rule is active
+  * Permit encoding negotiation on PT items (gzip deflated), previously there
+    was a bug where deflated contents could be delivered although not declared
+    as such, now it's explicitly allowed (where it fits into the flow) or not
+    avoided
+  * Fix potential thread leak
+
+  [ Miscellaneous]
+
+  * Database update
+  * Added CID-Index files to Debian's DEP11 file filter
+  * Internal refactoring, better debug logging
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 05 Apr 2020 18:22:54 +0200
+
+apt-cacher-ng (3.3.1) A-LITTLE-BUGFIX-FOR-A-MAN; urgency=medium
+
+  * POTENTIAL SECURITY ISSUE (CVE-2020-5202):
+    - in certain situations, the maint job run by acngtool could leak the
+      administrator credentials from apt-cacher-ng configuration. This is only
+      likely if the attacker is able to impersonate the daemon with an own
+      server listening on the same port.
+    - The mitigation path for this is:
+      - SocketPath option is configured by default
+      - By default, acngtool only attempts to run the maint job through the
+        Unix Domain Socket. If SocketPath is not set but admin credentials are
+        configured, the operation is denied.
+      - For non-standard cases where acngtool is used to run special arbitrary
+        commands (ACNG_REQ variable) and the operation through SocketPath is not
+        possible (i.e. missing permissions or the tool is run on a different
+        host), the operation through TCP can be enforced with ACNG_INSECURE
+        environment variable
+  * Support .zst compressed packages (reference:
+    https://www.archlinux.org/news/now-using-zstandard-instead-of-xz-for-package-compression/ )
+  * Added global cancelation points for the daemon shutdown phase, now
+    terminating sooner especially when a maintenance jobs runs in background
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 08 Jan 2020 20:47:37 +0100
+
+apt-cacher-ng (3.3) THE-CLAMPS-ARE-MARCHING; urgency=low
+
+  [ POSSIBLY BREAKING CHANGES ]
+  * the setting of cachedir and logdir in the built-in defaults is now
+    configurable at build time (-DACNG_CACHE_DIR=... -DACNG_LOG_DIR=...)
+    and this settings are also propagated into generated configuration examples
+  * Dropping support for CMake prior to v3.1, dropped most custom variables
+    for target locations, now relying on public CMake variables from
+    GNUInstallDirs module; for details, see
+    https://cmake.org/cmake/help/v3.2/module/GNUInstallDirs.html
+  * Dropping support for OpenSSL before 1.0.2
+
+  [ FEATURES AND IMPROVEMENTS ]
+  * Change of default network timeout to 40 seconds
+  * Reduced automatic retries on remote disconnects to two
+  * Alternative fallback scheme for non-primary target connection attempts
+    (with default timeout value of 4s, see FastTimeout setting). By default,
+    this should help with unstable (blocking) IPv6 routing where IPv4 is still
+    operational (Debian bug #942122)
+  * Refactored DNS resolution&caching code, potential fix of rate connection
+    problems
+  * RequiresMountsFor directive in systemd service file example with
+    additional remarks on keeping this in sync with the config (as in Debian
+    bug #929035 and partly suggested in #942355)
+  * PFilePattern extensions for Fedora 29 and 30, by Alan Jenkins, Debian
+    bug #928270 (thanks!)
+  * VFilePattern extension for Centos8, by Andy Lowther, Debian bug #944143
+    (thanks!)
+  * added very explicit explanation on what "default value" means in the
+    acng.conf example (Debian bug #855995) and also how to print it
+    (with acngtool, Debian bug #914746)
+  * Mirror database update
+  * Configurable timeout for forced client disconnect on the last portion of
+    data
+
+  [ BUGFIXES ]
+  * increased size of the decompression line buffer for config file reading
+    (Debian bug #942634)
+  * fixes potential data race in DNS resolution
+  * Typo in INSTALL file (Debian bug #913593)
+  * In Arch Linux database mirror list, rewrite https URLs to http since the
+    official JSON query only returns https versions, also add a different
+    source (from Debian bug #942844)
+  * Generation of Sourceforge mirror redirectors list is fixed
+  * Fixed an ancient bug where there last answered request might have been
+    delayed in processing due to incorrect selection of MSG_MORE flag
+  * Potential crash on shutdown prevented (misordered destructor sequence,
+    insufficient tracking of remaining active tasks)
+  * Correct shutdown of blocked incoming connection on daemon shutdown
+  * Limit of simultaneous DNS resolver requests to 8 due to observed
+    instability of glibc (probably
+    https://sourceware.org/ml/libc-alpha/2015-10/msg00865.html )
+
+  [ INTERNAL REFACTORING ]
+  * Overhauling code deployment, using a shared library (reducing installed
+    file size by up to 20%)
+  * dropped rfc2553emu code from old APT, using the platform abstraction from
+    libevent instead
+  * partial redesign for more singlethreaded IO operation
+  * Disabled LTO by default, still crashing gold linker with certain option
+    combinations
+  * Moved lingering on CLOSE_WAIT sockets to the single main thread
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 10 Nov 2019 18:59:08 +0100
+
+apt-cacher-ng (3.2) MY-NAME-IS-ANYBODY; urgency=medium
+
+  * Maintenance release
+  * Basic support for FlatPak repositories
+  * Added flat by-hash structure to file patterns
+  * Allowing some Debian and Ubuntu services in default PassThroughPattern
+  * Various fixes in manpage and configuration examples
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 07 Sep 2018 12:55:46 +0200
+
+apt-cacher-ng (3.1) SPACE-COWBOYS-FOREVER; urgency=low
+
+  * Hide credentials in acngtool in some corner cases (by astian)
+  * Dropped references to distkill.pl script which was superseeded by acngtool
+  * Made default PassThroughPattern setting (bugs.d.o) stricter
+  * Mirror database update
+
+  [ Carlos Maddela ]
+  * Avoid expiration failure when some index files are missing
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 05 Nov 2017 20:28:09 +0100
+
+apt-cacher-ng (3) THIS-IS-NOT-THE-END; urgency=medium
+
+  * NOTE: this release tackles multiple issues that might be considered
+    security related in certain environments.
+  * FIX: Making sure to truncate the file in case its download is aborted.
+    This is needed in order to avoid hidden filesystem space allocation
+    (Debian bug #856635). Also more delicate use of fallocate calls on Linux
+    due to the potentially syscall execution delay. By default, limit the
+    requested size to the first megabyte of a file.
+  * FIX: detection of incorrectly allocated files and automated trimming in
+    expiration run
+  * FIX: acngtool shrink function now uses allocated space for calculation,
+    not the visible size. Also more user friendly verbose output and little
+    performance optimization.
+  * FIX: acngtool shrink function now also considers unknown files as junk
+  * FIX: compilation with GCC7, also warning fixes with Clang4
+  * FIX: better checking of possibly invalid remote certificate configuration
+    in SSL client code
+  * FIX: added workaround code for OpenSSL certificate validation even with
+    ancient SSL versions like the one found in Ubuntu 14 LTS; borrowed from
+    libevent examples (originally from ssl-conservatory and cURL)
+  * FIX: no printing of requested file name in the 403 HTTP status line
+  * FIX: typo/wording in manual, iptables examples
+  * FIX: in file truncation wizard (cleanup task), don't truncate the
+    associated .head files (because they might contain the best download
+    source information)
+  * NEW: better index deletion wizard, offering to remove all related files in
+    the same run. This can help to avoid accidental recreation of "incomplete"
+    files later.
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 14 Mar 2017 16:23:20 +0100
+
+apt-cacher-ng (2) THE-LAST-JOB-FILMS-LTD; urgency=medium
+
+  * Minor refactoring (DNS cache with fewer mutexes)
+  * FIX: communication for maint jobs now properly considers possible
+    addresses from daemon's configuration. Communication via UDS remains
+    broken which is subject to repairs in the next update of core code
+  * FIX: Correct parsing of unix suffixes for ExStartTradeOff option
+  * FIX: fixes for compilation errors with GCC 5.4 (by Bob Ham)
+  * FIX: try to link with libatomic, some architectures require it
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 22 Nov 2016 21:29:54 +0100
+
+apt-cacher-ng (1) LOGAN-VS-BLADE-RUNNER-3D; urgency=low
+
+  * The version numbers change to plain integer. The minor numbers were
+    already hardly used for differentiation between bugfix and feature
+    releases. If this becomes ever needed, the version might be extended to
+    x.y scheme.
+  * FIX: typo in option name ExThreshold, and also hiding obsolete options
+    in configuration dump
+  * FIX: correct display of errors in acngtool curl operation
+  * FIX: strict SSL hostname validation even with peers not supporting SNI
+    (Debian bug #839751)
+  * NEW: simple "live" download statistics display on the maintenance page
+  * NEW: storage of simple download statistics across service restart (until
+    the expiration run)
+  * NEW: default method to abort expiration runs if not much data has been
+    downloaded though the proxy since the last expiration run.
+  * NEW: special command in acngtool ("shrink") to files until
+    the wanted size of the cache directory is reached (considering file type
+    and creation dates). The default strategy is keeping least recently
+    downloaded files in cache.
+  * NEW: optional tagging of used package files which can influence the
+    "shrink" command operation to keep least recently USED files instead of
+    least recently downloaded files.
+  * CHANGE: remote errors now printed as E states in the logging code
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 19 Oct 2016 22:07:06 +0200
+
+apt-cacher-ng (0.9.3.2) PAINT-IT-AEROGLAZE-Z306; urgency=low
+
+  * FIX: avoid endless looping on startup when a new (not existing) directory
+    was specified as CacheDir
+  * FIX: build failure on non-Linux POSIX systems (Debian bug #830736, now
+    moved namespace tag to general scope)
+  * FIX: Stop printing bogus "error" summary on the end of every maintenance
+    task execution
+  * NEW: allow for omission of CacheDir setting; continues operation in
+    degraded mode with only harmless features which are not needing local
+    storage (HTTPS pass-through, local web server)
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 12 Jul 2016 21:56:15 +0200
+
+apt-cacher-ng (0.9.3.1) KLENDATHU-AIRLINES-FLIGHT-931; urgency=low
+
+  * This is a minor bugfix release, there are more changes to expect soon
+  * FIX: attaching to monitor the output of background maintenance task in the
+    browser working properly
+  * Extended workaround for the fake Content-Location "redirect", setting
+    "Accept: octet/stream" header which seems to be the only way to tell
+    Apache and nginx that we really want THAT data and not some compressed
+    version (no matter whether it's gzip or xz or cewwlCrzyCompression3000 or
+    whatever their authors consider suitable for everybody by default)
+  * Better handling of error situations in expiration task, printing a summary
+    at the bottom.
+  * extended metadata (changelogs) download filters for Tanglu
+  * Added documentation on how to use multilines with RequestAppendix option
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 08 Jun 2016 23:07:52 +0200
+
+apt-cacher-ng (0.9.3) HAVE-SOME-LIGHT-BALLS; urgency=medium
+
+  * FIX: Cope with removal of SHA1 checksums from Debian/Ubuntu (In)Release files
+  * FIX: Overhaul of pdiff based update code, actually repairing pdiff code in
+    some environments which has been silently broken for about 2-3 months.  The
+    old code was designed for the situation a half decade ago when
+    information like compressed version's checksum was not available in the
+    patch index.
+  * FIX: reduction of volatile data whitelist - now expiring deprecated
+    Translations*/* data
+  * Small review of expiration (index file updating) code, replaced some
+    cruft to make analysis with less syscalls and attempt to get more likely
+    available of remote files in some cases.
+  * Better handling of by-hash type files:
+    + Moved internal storage of Release files' tracking snapshots to a private
+      namespace of the cache
+    + Proper detection of caches where by-hash data has been downloaded by
+      previous versions without tracking snapshots and work around this
+      situation
+    + in case that by-hash directory has a better version of the reference
+      file (matching the latest InRelease's signature), the reference file
+      contents is replaced with that correct version
+    + correct handling for expiration with or without strict path checking
+  * WORKAROUND:
+    + detecting a situation when remote attempts to foist uncompressed version
+      on the proxy and returning a 500 code to user instead; otherwise that data
+      would be handled incorrectly and eventually poison the cache
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 29 May 2016 18:34:45 +0200
+
+apt-cacher-ng (0.9.2) HERE-COMES-JASON; urgency=medium
+
+  * Added regexps for Debian, by-hash index files and changelog data on
+    ftp-master.debian.org
+  * FIX: expiration of orphaned Packages.bz2 (and similar) files in
+    Debian/Ubuntu repositories
+  * Added deb.debian.conf to Debian mirror list (Debian bug #820813)
+  * Database update
+  * Enabling LTO on GCC 5+ as default (working around suspected pthread issues
+    by switching to std classes instead of custom pthread access), also fixing
+    some GCC 6 specific warnings
+  * FIX: default regex for .asc suffix, for Debian's new source files' PGP
+    signatures, since dpkg-dev 1.18.5
+  * FIX: parse option suffixes with hypens (like Remap-x-y) correctly
+  * FIX: on systems where volatile files are accessed ONLY through files named
+    by hash value (actually only Ubuntu Xenial),
+    attempt to extract the original file names from seen InRelease files and
+    restore tracking of original files.
+    This is a stop-gap solution (and there will better integration of
+    Acquire-By-Hash feature in future releases) but it's needed to be
+    deployed ASAP to avoid cache damages on existing systems.
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 13 May 2016 19:37:53 +0200
+
+apt-cacher-ng (0.9.1) THE-DARK-NIGHT; urgency=low
+
+  * FIX: correct human error message printing with recent glibc
+  * FIX: corrected linking on systems that need additional libraries to be
+    linked manually for socket IO while libwrap was not available
+  * More file pattern changes for Ubuntu's do-release-upgrade tool
+  * Better processing of filename sets in the "deletion" wizard (compressed
+    parameter exchange for longer lists)
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 28 Feb 2016 17:17:43 +0100
+
+apt-cacher-ng (0.9.0) MAXIMUM-OVERDRIVE; urgency=low
+
+  * FIX: Ubuntu Installer's ReleaseNotes fetching was interpreted incorrectly
+    forced redirection of ISP to its auth page. Now keeping the target page
+    in doubt, just making sure it's reloaded next time.
+  * More volatile regexp's to cover requests from Ubuntu Installer, including
+    the link that it uses to examine state of the network connection
+  * FIX: Replaced "unofficial" uint type with unsigned (should resolve build
+    problems under FreeBSDs)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 01 Feb 2016 19:48:10 +0100
+
+apt-cacher-ng (0.8.9) VOID-WHICH-BINDS; urgency=high
+
+  * FIX: acngtool shall not use proxy in the maint job
+  * Minor tweaks for reproducible builds (file order, permissions in tarball)
+  * Removed debian-volatile archives from the DB generator
+  * Database update
+
+  [ Eric Vander Weele ]
+  * Fix for Alioth issue #315276 (explicit return type declaration in a
+    lambda, for a build failure with clang 3.5)
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 21 Jan 2016 20:21:59 +0100
+
+apt-cacher-ng (0.8.8) CTHULHU-IS-CALLING; urgency=medium
+
+  * Added support for AppStream metadata in Debian
+  * Added filename regexps for FreeBSD files (no expiration code yet)
+  * Updated documentation to refer to acngtool instead of expire-caller.pl
+  * FIX: check-all checkbox in cleanup assistant functionality, and minor HTML
+    format fixes
+  * Refactored setting of complex option, added their printing with acngtool
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 20 Dec 2015 14:21:58 +0100
+
+apt-cacher-ng (0.8.7) GIANT-LEAP-FOR-THE-FROGKIND; urgency=low
+
+  * Added more user hints about config files in acng.conf
+  * DB generator improvements (parallelization or mirror probing using xargs)
+  * added Ubuntu distupgrader release notes to volatile files pattern until
+    better information is available
+  * Database update
+  * More useful reporting of outgoing connection mode on debug verbosity level
+  * On GNU toolchain, reduce the size of acngtool and acngfs binaries with
+    *sections* options set
+  * Option to detect (and turn off) an unreachable upstream proxy through a
+    custom shell command
+  * Build system changes to really check linker flags in linker calls (fixing
+    build on OS-X) and to build faster (just share code between build targets)
+  * Option to build without LibTomCrypt (with reduced functionality) or with
+    statically linked LibTomCrypt without having to install it first
+  * More usefull error messages from acngtool's HTTP downloader
+  [ Christoph Biedl <debian.axhn@manchmal.in-ulm.de> ]
+  * Fix computation of download limit
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 03 Dec 2015 20:22:52 +0100
+
+apt-cacher-ng (0.8.6) LITTLE-STEP-FOR-A-BIT; urgency=low
+
+  * Build system overhaul, splitted CMakeLists.txt per target, added install
+    rules, updated build documentation
+  * FIX: enabled SNI feature (TLS Server Name Indication)
+  * If OpenSSL is not available, use LibTomCrypt for hash algorithms. Dropped
+    included sha1/sha2/md5 implementations.
+  * FIX: smarter switching between InRelease and Release file versions in
+    expiration runs, triggered by a 404
+  * FIX: added auto-skipping of failing proxy to also for tunnel construction
+    (https proxying, bugs.debian.org SOAP, etc.)
+  * FIX: disabled LTO again, sometimes runtime errors with GCC5
+  * NEW: moved the expiration caller script functionality to acngtool and made
+    it less verbose for better use in cron jobs
+  * FIX: code mistake in Darwin specific parts. Plus, the new LD flags checks
+    should also cover the wrong --as-needed check (Alioth task #315130)
+  * FIX: in expiration, force blacklisting of .head files without related
+    content, even for index files like deprecated Packages.bz2/Sources.bz2
+  * More automatic index file replacements (Sources/Packages gz to xz,
+    InRelease to Release and vice versa)
+  * Removed timestamps from generated gzip files
+  * Added Ubuntu's mirror.txt to whitelist (no point in removing it)
+  * Database update (and fixed update of gentoo_mirrors.gz)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 21 Sep 2015 21:32:11 +0200
+
+apt-cacher-ng (0.8.5) WHERE-NO-VERSION-HAS-GONE-BEFORE; urgency=low
+
+  * FIX: smart reconnection code (for sudden remote disconnects) was not
+    working as intended since at least version 0.7.4 (however, this was
+    covered by other issues and became visible after recent changes related to
+    connection forwarding)
+  * FIX: Changed default pipeline depth to 10 for better compatibility with
+    stupid middleboxes
+  * NEW: Added SHA2 support and for non OpenSSL usage: implementations from
+    http://www.ouah.org/ogay/sha2/
+  * FIX: expiration code for Cygwin data
+    + file entry parsing with SHA512 variants
+    + correct resolution of base path, fixing path and checksum verification
+    + added setup.bz2 to whitelist
+  * FIX: in maintenance task downloads, strip double slashes from remote URLs
+    which were added on repo-mapped paths (Debian bug #793356)
+  * CHANGE: in configuration parsing (adding contents from linked files), a
+    <something>.default file was not considered if <something> file was found
+    (even if <something> was unreadable or didn't have useful contents)
+  * Database update
+  * Added a helper to remove deprecated bz2 versions of index files ASAP
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 30 Jul 2015 23:28:51 +0200
+
+apt-cacher-ng (0.8.4) REVENGE-OF-THE-KLUDGE; urgency=low
+
+  * Code refactoring, little memory consumption improvements
+  * FIX: creation of the PID file even in non-forking mode (Debian bug #784752)
+  * Moving some functionality not relevant for server operation to a dedicated
+    tool called "acngtool"
+  * VFilePattern extension, [#314924] Allow access to CentOS images
+  * LTO is default option again, removed NOLTO hack (use CMAKEOPTS to disable)
+  * Compilation fixes for the MUSL C library (by Felix Janda
+    <felix.janda@posteo.de>)
+  * Redirection of plain http POSTs to bugs.debian.org is now always
+    redirected to https style URL.
+  * FIX: HTTP header parser supports multilines, also solved potentialy
+    incorrect parsing in some cases (identical prefix of header name)
+  * Added recent Ubuntu release names (vivid, wily) to mirror checker
+  * NEW: when uncached operation is active (DontCache* options), most custom
+    headers are passed to the remote servers (Alioth task 314773)
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 18 Jun 2015 21:59:04 +0200
+
+apt-cacher-ng (0.8.3) TECHNICAL-DEBT-STRIKES-BACK; urgency=medium
+
+  * FIX: semi-smart replacement of .bz2 files with their .xz variants if the
+    .bz2 version is no longer available (current mess with the Debian archive)
+  * Code refactoring
+  * Semi-automated getting of Sourceforge mirror network URLs, list update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 02 May 2015 16:22:45 +0200
+
+apt-cacher-ng (0.8.2) FOR-A-FEW-BYTES-MORE; urgency=low
+
+  * CHANGE: by default, bugs.debian.org:443 is permitted for CONNECT requests
+    if an extra proxy is configured
+  * FIX: correct detection and blacklisting of broken (permanently
+    disconnecting) hosts
+  * NEW: options to run a command upon SIGBUS and disable SSL checks
+  * Creating fresh connection for each bugs.d.o operation (attempt to fix
+    Debian bug #775126)
+  * Various fixes and workarounds for pass-through operations in proxy
+    cascades, for direct connects (HTTPS tunnels) and bugs.debian.org SOAP
+    activities
+  * Various bugfixes of program option parsing and return codes
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 29 Apr 2015 11:30:01 +0200
+
+apt-cacher-ng (0.8.1) JUST-A-LITTLE-BIT; urgency=low
+
+  [Eduard Bloch]
+  * Minor build system improvements
+  * Mirror database update
+  * Added .o files to volatile file name pattern (LP: #1078224)
+  * LTO disabled by default (Debian bug #777753)
+  * Simple regex testing helper
+  * Add handling of http://keyserver.ubuntu.com:11371/pks/lookup?op=get...
+    calls to volatile file pattern (LP: #993426)
+  * Added special method to tell the server to switch to HTTPS transport
+  * Unified the injection of additional mirrors when building mirror lists
+  * Added additional mirror list source (mirrors.fedoraproject.org services),
+    investigated by Carlos Maddela (Debian bug #780555)
+
+  [Carlos Maddela]
+  * Allow Fedora Rawhide repository to be treated as volatile
+  * Fixed support for SPfilePatternEx and improved documentation (Debian
+    bug #780550)
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 10 Apr 2015 18:35:31 +0200
+
+apt-cacher-ng (0.8.0) GOOD-ENOUGH; urgency=low
+
+  * Work around damaged cache contents when retrieving index files in
+    maintenance tasks (Debian bug #737069)
+  * Cosmetic changes
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 20 Oct 2014 22:39:17 +0200
+
+apt-cacher-ng (0.8.0rc4) BETA; urgency=low
+
+  * Using eventfd only on Linux
+  * Portability fixes for kFreeBSD and Windows (Cygwin)
+  * For static generated content respones, make sure to send the EOF chunk
+    before closing connection (Debian Bug #762969)
+  * Maintenance page related:
+    + Cosmetic fixes
+    + Fix enforced download on aggregated repos without backend spec (now
+      really considering the download URL even from inconsistent header files)
+    + Added proper reconstruction of URL for enforced downloads relatively
+      to the associated .diff/Index file
+    + Fixed some undefined behavior in volatile file refreshing, improved some
+      "optimistic" code
+  * Reenabled use of LTO (opt-out now with NOLTO=1 flag)
+  * Fixed explicite download error hiding
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 03 Oct 2014 23:55:02 +0200
+
+apt-cacher-ng (0.8.0rc3) BETA; urgency=low
+
+  * Remove some forgotten debug printing which interfered with option parsing
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 20 Sep 2014 12:40:56 +0200
+
+apt-cacher-ng (0.8.0rc2) BETA; urgency=low
+
+  * Merge with 0.7.x branch changes
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 20 Sep 2014 12:14:26 +0200
+
+apt-cacher-ng (0.8.0rc1) BETA; urgency=low
+
+  * Systemd changes: sd_notify integration if libsystemd-daemon is available.
+    Service file now can act more precisely if Type is set to notify. Minor
+    tmpfiles config tuning to survive bad permission changes, obsoleting the
+    ExecStartPre command.
+  * Alternative to download thread wake via pipe with eventfd on Linux systems
+    (needs less file descriptors)
+  * Config file lookup code change to found .default files scattered between
+    config and support-data folders
+  * Fix false positive of the bad-auth-page-redirection detector, triggering
+    on multiple redirects with some HTML content (Sourceforge scheme). Also
+    allowed ?&= to be sent unencoded since some server's don't decode the
+    escaped version correctly.
+  * Keep some information in cached headers while reseting the file state
+    (needed to retrive original URL for maintenance tasks)
+  * Rereading disk information in advanced file checks (maintenance), cache
+    cannot be trusted and keeping it fresh is not worth the efforts
+  * Fixed HTTP redirection with backend mode
+  * Maintenance download code now prefers the original path resolved by
+    backend consideration if that option looks more likely
+  * Internal refactoring WRT download job management
+  * Fixed Base64 encoding to work correctly with non-ascii characters (still
+    not recommended, better use URL encoding in password settings!)
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 20 Sep 2014 10:51:05 +0200
+
+apt-cacher-ng (0.8.0~pre3) BETA; urgency=low
+
+  * Special handling for a case where no volatile (meta) data is present in
+    the cache in its original version but the pdiff patches are there. The
+    guessed best version of the base file is fetched automatically.
+  * Internal refactoring, replacement of GCC specific atomic operations in
+    debug code
+  * FIX: potential bottleneck (serialization of connect operations because of
+    too big critical section)
+  * FIX: SSL_connect now running on non-blocking file handle with timeout,
+    hopefully avoiding the sometimes happening freezing for hours
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 09 Sep 2014 22:52:32 +0200
+
+apt-cacher-ng (0.8.0~pre2) ALPHA; urgency=low
+
+  * Fixed Tracing mode in non-debug build
+  * Added NEWS.Debian to the volatile patterns filter (LP: #1350432)
+  * FIX: premature release of internal file descriptors sometimes causing
+    pointless reconnects (thanks to Kirill Timofeev)
+  * FIX: rare case of premature abortion of a chunked transfer if the source
+    deliveres data to slowly
+  * Added a trick to allow silent handling of arbitrary range requests in a
+    more appropriate way (returning 206) within a limited defined period
+    (configured through MaxInresponsiveDlSize variable; Debian bug #744727)
+  * Stopped using encoded URL strings in the internal processing (pointless
+    code compilications)
+  * Added support for more formats of the Location: URL in redirects
+  * Refactoring of old file item maintaining code
+  * Partial workaround for transparent redirects to WiFi auth sites etc.
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 30 Aug 2014 21:33:14 -0700
+
+apt-cacher-ng (0.8.0~pre1) ALPHA; urgency=low
+
+  * Better reporting of error messages in config file reader (Alioth
+    task 314684)
+  * Source tree cleanup, moving to git
+  * Database update
+  * overall code review and refactoring with C++11 features, now requiring
+    language feature support of GCC 4.7 or newer or equivalent Clang compiler
+  * Admin helper tool for identification of required filename pattern changes
+  * Additional pattern options that extend the current ones, allowing to user
+    to add custom configuration without interference with future updates of
+    default settings
+  * Special file name pattern set which identifies static files before
+    name is checked against volatile file pattern. The feature is now used to
+    identify special .gpg files that are static while volatile rule matches
+    all others .gpg files (Debian bug 720165)
+  * Partial rewrite of internal web page creation code, new syntax for server
+    side includes, with smooth access to configuration options and less
+    computational overhead
+  * better checks for compiler and linker features
+  * CXXFLAGS and LDFLAGS variable passing (for optimizations, see INSTALL)
+  * Using hash maps/sets on various locations for better performance
+  * Portability fixes for systems without zlib or libbz2
+  * Lots of refactoring on maintenance page factory code, including bugfix:
+    Displaying user info page rather than admin page if the admin page site
+    name was not configured in the config at all
+  * On expiration code, review and partial rewrite:
+    + better readability and performance
+    + less memory usage
+    + contents checking for Debian Installer image indexes, no more carte
+      blanche for d-i files unless one adds them manually to the whitelist
+    + better checking file sizes inconsistencies without checksumming
+  * Review and refactoring of repository management:
+    + better readability
+    + now using better tailored containers
+    + stricter size format parsing on certain places
+    + fixed removal checkboxes not appearing sometimes
+  * Helper rules to install database generation scripts, see Debian package
+    for details
+  * If OpenSSL is available, use libcrypto implementations of SHA1 and MD5
+    hashing (much faster on modern CPUs)
+  * Added data download throttling (AKA speed/rate limiting)
+  * Additional care about never truncating files while they might be still
+    open in the maintenance tasks
+  * Rudimentary handling of SIGBUS; only user notification with guessed
+    trouble source (mmap'ed file) in error log and gracefull exit
+  * If OpenSSL is available, use libcrypto implementation of SHA1 and MD5
+    hashing (much faster on modern CPUs)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 16 Jul 2014 22:00:34 +0200
+
+apt-cacher-ng (0.7.27) BETA; urgency=low
+
+  * Starting with this release, this branch goes into maintenance mode and
+    future versions 0.7.x will receive only the most urgent bugfixes and
+    database updates, and some other small and harmless changes
+  * Merged build system changes from 0.8.x branch with little modifications,
+    including move of dbgen rules into dbgen/Makefile
+  * Merged fix for CVE-2014-4510 (XSS attack resistance)
+  * Database update
+
+ -- 
+
+apt-cacher-ng (0.7.26) BETA; urgency=low
+
+  * FIX: Correct re-escaping URLs on internal forwarding and stop
+    double-unescaping of incoming request URLs (patch from Carlos Maddela)
+  * FIX: Removed leading slash from "Delete all unreferenced" link which was
+    interpreted by browsers as a-host-via-same-protocol (also by Carlos Maddela)
+  * FIX: Make the build without lzma possible again 
+  * FIX: Optional per-repository proxy switch now working and documented
+  * Simple option to just dump the complete configuration after assembling it
+  * Added http.debian.net the same way as cdn.debian.net
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 22 Mar 2014 14:20:36 +0100
+
+apt-cacher-ng (0.7.25) BETA; urgency=low
+
+  * FIX: handling certain SSL transport errors happening after
+    handshake which could hause an endless loop
+  * FIX: line parser could cause endless looping on truncated bz2
+    compressed text files (regression from 0.7.23)
+  * FIX: optimized handling of whole sequences of redirection
+    responses, now working with additional response bodies within
+  * FIX: DNS cache confused entries with different ports like 80 vs. 443
+  * Better printing of SSL verification error strings
+  * Review/Update of internal file downloader (for maintenance tasks), now
+    prefering stored original URL as main source description
+  * Removed old code that implemented a workaround for the Debian bug
+    #520824 (temporary and many years old)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 05 Jan 2014 12:05:59 +0100
+
+apt-cacher-ng (0.7.24) BETA; urgency=low
+
+  * Little helper to print single configuration settings as seen after
+    configuration directory reading.
+  * Fixed unused assignment compiler warning on architectures not supporting
+    fallocate
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 19 Dec 2013 20:55:55 +0100
+
+apt-cacher-ng (0.7.23) BETA; urgency=low
+
+  * The "Getting Some Old Stuff Right" release
+  * Refactored uncompressor handling, now really fixing end-of-stream handling
+    (replacing the incorrect workaround introduced for XZ in 0.7.21), adding
+    dynamic buffer for the line parser (now accepting lines with length up to
+    almost 64kb)
+  * Experimental feature: stop using a failing HTTP proxy (Alioth task
+    314324). Optional, with a configurable connection timeout.
+  * Configuration file review (format, consistency, descriptions, update of
+    default settings), configuration parsing code review and little fixes,
+    like now it's possible to unset Proxy again.
+  * Remembering pre-escaped URL state and making sure not to double-escape
+    certain chars in internal HTTP redirects (Alioth task 314548)
+  * SSL support with OpenSSL (if available), overall code adaptation to
+    accept https:// as alternative URI scheme (Debian bug #729508)
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 17 Dec 2013 21:20:18 +0100
+
+apt-cacher-ng (0.7.22) BETA; urgency=low
+
+  * Ignoring commented lines in rewrite lists
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 09 Dec 2013 21:30:38 +0100
+
+apt-cacher-ng (0.7.21) BETA; urgency=low
+
+  * Added credentials handling to backend URL definitions (Debian bug #729505)
+  * Database update, also added the rarely used ftp.debian.com alias
+  * Better integration and database update code for Gentoo repositories,
+    patch from Robin H. Johnson <robbat2@gentoo.org> with little changes
+  * working around weird behavior of xz decompressor happening on some small
+    index files (Debian bug #729941)
+  * first preparations of libssl support
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 09 Dec 2013 00:19:19 +0100
+
+apt-cacher-ng (0.7.20) BETA; urgency=low
+
+  * Build fix for non-standard namespace with smart pointers (by Andrew
+    Sharpe, Alioth bug 100566)
+  * Trying to create its cache directory on startup (Debian bug #729939)
+  * Potential fix for a download contents disorder (Debian bug #730221)
+  * Database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 23 Nov 2013 20:53:51 +0100
+
+apt-cacher-ng (0.7.19) BETA; urgency=low
+
+  * The Just What We Can Fix ASAP release
+  * Database update
+  * Explaining failure of daemon() call in the error messages
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 28 Oct 2013 22:16:54 +0100
+
+apt-cacher-ng (0.7.18) BETA; urgency=low
+
+  * Added systemd tmpfile.d conf file, moved systemd related files to systemd/
+  * Introduced custom.gpg as volatile file (Debian bug #720165)
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 20 Aug 2013 00:38:02 +0200
+
+apt-cacher-ng (0.7.17) BETA; urgency=low
+
+  * FIX: now really made the option for first expiration error(s) suppression
+    configurable by the user
+  * Little build system hardening
+  * Created systemd service script
+  * mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 18 Aug 2013 22:44:01 +0200
+
+apt-cacher-ng (0.7.16) BETA; urgency=medium
+
+  * FIX: now really ignoring unavailability of the pdiff Index files in the
+    metadata update step of the expiration task
+  * FIX: segmentation fault in the maintenance tasks (programming mistake
+    in 0.7.15)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 31 Jul 2013 23:34:20 +0200
+
+apt-cacher-ng (0.7.15) BETA; urgency=medium
+
+  * FIX: with connection caching, connections in timeout state were
+    erroneously reported as download problems although recovery from this
+    state was possible and expected by related code (Debian bug#717832)
+  * FIX: regressions in 0.7.14: download threads not terminated ASAP when
+    the client has gone (not before remote connection times out); local file
+    serving returned empty body
+  * FIX: macro changes (to an inline method) to work on certain FreeBSD variants
+    (Alioth ticket #313622)
+  * NEW: method to suppress first error reports from the cron job, e.g. like
+    on rarely appearing download problems
+  * nicely handling the disappearence of i18n/Index files in the cache data
+    expiration code
+  * mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 28 Jul 2013 21:05:17 +0200
+
+apt-cacher-ng (0.7.14) BETA; urgency=low
+
+  * FIX: removed reporting cache hits to apt-cacher.err if the debug config
+    option is not set to debug value 
+  * FIX: preventing a hickup in download execution occuring sometimes when
+    pipelining was in use and a second APT client suddenly disconnected after
+    requesting a file but before starting to receive it (symptoms: "Unknown
+    error" or "Invalid header")
+  * FIX: HTML syntax in maintenance log and better readability in browser or
+    pure text editor
+  * FIX: Overhaul of background cleanup scheduler, now spending less CPU time
+    with unrelated tasks, preventing infinite loops even if the processing
+    code calculated its timing wrong. Minor code fixes on places that might
+    have caused such loops or inefficient execution under certain
+    circumstances
+  * Logging code cleanup, added better debugging info (on SIGUSR2) for
+    background cleaner activity and overall cache state
+  * Overall refactoring and cleanup of file/download item management code,
+    more safe reference counting now
+  * Added manual to LocalDirs in order to serve it through apt-cacher-ng
+  * Reading MIME types is now only done on the first request (save memory)
+  * Disabled extra heuristics telling the user that the proxy and URL
+    rewritting are active. This usecase is possible now since LocalDirs was
+    introduced (Alioth ticket #314314)
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 20 Jul 2013 10:50:25 +0200
+
+apt-cacher-ng (0.7.13) BETA; urgency=low
+
+  * FIX: consistent URL escaping/unescaping handling, works around problems
+    with weird peers (Alioth bug #314030)
+  * FIX: Darwin port build fix from Andrew Sharpe (Alioth bug #314025)
+  * Avahi config from Lisandro Damián Nicanor Pérez Meyer
+  * Unified handling of storage paths in restrictive filesystems.
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 21 May 2013 20:23:38 +0200
+
+apt-cacher-ng (0.7.12) BETA; urgency=low
+
+  * FIX: added mirrors.txt to file name patterns (for Ubuntu's mirror lookup
+    tools, LP: #1020995)
+  * FIX: real Darwin port (based on work from Andrew Sharpe
+    <andrew.sharpe79@gmail.com>)
+  * NEW: options to disable persistent connections and configure pipelining
+    behaviour (LP: #1097952)
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 12 Jan 2013 20:15:04 +0100
+
+apt-cacher-ng (0.7.11) BETA; urgency=low
+
+  * FIX: iterator out of bounds when looking for file item replacements
+  * Spelling fix: s/Threat/Treat/
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 19 Dec 2012 20:14:46 +0100
+
+apt-cacher-ng (0.7.10) BETA; urgency=low
+
+  * Fixes accidential removal of .rpm files covered by XML indes of unknown
+    format in the cleanup routine
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 06 Nov 2012 23:23:38 +0100
+
+apt-cacher-ng (0.7.9) BETA; urgency=low
+
+  * Fixed downloads with the ForceManaged mode (too paranoid redirection
+    checks and not implemented correctly)
+  * Mirror database update. Removed http.debian.net from regular Debian
+    mirrors URL list again, there is some potential of involuntary creation of
+    endless redirection loops. Should better be used by administrators who
+    know what they are doing.
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 05 Nov 2012 23:16:58 +0100
+
+apt-cacher-ng (0.7.8) BETA; urgency=low
+
+  * FIX: overhaul of the http redirection handling, it all moved to the
+    download agent where it actually belongs to. Can now silently resume a
+    download if a mirror suddenly failes while download was running.
+  * FIX: partial rewrite of cache management code, getting rid of some
+    evolutionary created junk. Now possible to detect file descriptors that
+    got stuck because of some blocking client and setup a replacement program
+    path for other clients when they need a fresh version of the remote file.
+  * NEW: SIGUSR2 writes an overview of the cache state to the error log
+  * Database update, also includes http.debian.net now.
+  * Adding .html suffix to maintenance reports, for convenience.
+  * Added .drpm files to filename patterns
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 04 Nov 2012 20:38:02 +0100
+
+apt-cacher-ng (0.7.7) BETA; urgency=low
+
+  * FIX: moved object cleanup activity to a dedicated thread, review and
+    possible fixes of invocation conditions
+  * NEW: CONNECT pass-through mode for explicitly specified hosts
+  * Some refactoring of filename matching code
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 04 Aug 2012 20:38:47 +0200
+
+apt-cacher-ng (0.7.6) BETA; urgency=low
+
+  * Added more volatile path patterns for CentOS/SL (Ubuntu bug 1006844)
+  * Working around bad servers/proxies returning 416 instead of fresh
+    responses when Range/If-Modified-Range combo couldn't be satisfied
+    (probably Debian bug #676214)
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 07 Jun 2012 17:13:18 +0200
+
+apt-cacher-ng (0.7.5) BETA; urgency=low
+
+  * More fixes for corner cases of silent resuming handling
+  * BSD portability fixes (fdatasync check, using greedy operand in regular
+    expressions since non-greedy version is not really needed anymore)
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 30 May 2012 23:44:44 +0200
+
+apt-cacher-ng (0.7.4) BETA; urgency=low
+
+  * FIX: more precise checks for directory change attempts, allowing file
+    names with double dots (Debian bug #665301)
+  * FIX: increased retry counts for reconnection attempts since the current
+    default (2..4) might be to low with whacky uplinks and repeatedly changing
+    target hosts (Debian bug #672801), also sleeping a while before
+    reconnecting and extra handling for unexpected EAGAINs
+  * FIX: not attempting a download on idle file items (causing misleading
+    error messages, Debian bug #672801 second part)
+  * FIX: Prevent endless looping on certain download problems (Ubuntu
+    bug 999915)
+  * FIX: FreeBSD portability fixes
+  * Implemented "truncate damaged" function in the admin interface, fixed
+    confirmation page's layout
+  * Little workarounds for various hickups in dirty cache structures
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 24 May 2012 13:37:08 +0200
+
+apt-cacher-ng (0.7.3) BETA; urgency=low
+
+  * FIX: storage of HTTP header data written to contents of cached files after
+    unexpected disconnect
+  * FIX: Include unistd.h to build with latest GCC
+  * Printing warnings when a non-mergeable config value is overriden
+  * Option to turn on/off the use of Range/If-Range/If-Modified-Since fields in
+    requests for volatile files, needed to work around broken (proxy) servers
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 20 Apr 2012 09:26:16 +0200
+
+apt-cacher-ng (0.7.2) BETA; urgency=low
+
+  * FIX: Added consideration of HTTP status 307 on more places along with 301
+    and 302 codes (Debian Bug#661971)
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 03 Mar 2012 17:25:51 +0100
+
+apt-cacher-ng (0.7.1) BETA; urgency=low
+
+  * FIX: forwarding of data while receiving a remote file in chunked transfer
+    mode (instead of zero-byte sized responses)
+  * FIX: implemented proper skipping of chunked transfer trailer before
+    switching to the next response
+  * FIX: don't consider very small uncompressed file as damaged (Debian
+    bug 660622)
+  * Reset the cached file data if the subsequent response in the stream seems
+    to have garbage as header (another symptom from Debian bug 658550)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 20 Feb 2012 22:12:52 +0100
+
+apt-cacher-ng (0.7) BETA; urgency=medium
+
+  * FIX: unified access to internal cache object key, fixes memory leak,
+    bogus "reproducibility" and misleading error messages, all caused by late
+    filename normalization with special handling of ~ (Debian bug 658550)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 05 Feb 2012 12:04:45 +0100
+
+apt-cacher-ng (0.6.12) BETA; urgency=low
+
+  * NEW: internal following of HTTP redirection responses with configurable
+    redirection limit
+  * FIX: unescaping RequestAppendix option value with multiple newlines
+    correctly
+  * FIX: more generic name pattern for volatile files, also treating *.db
+    files as compressed index data in expiration (automatically detected by
+    magic strings now)
+  * FIX: now really supporting legacy .lzma file format
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 15 Jan 2012 16:09:54 +0100
+
+apt-cacher-ng (0.6.11) BETA; urgency=low
+
+  * FIX: when original source used chunked transfer encoding, the local
+    delivery also prefered chunked mode even where Content-Length was known
+  * FIX: [acngfs] copy complete statvfs buffer in statfs call
+  * minor optimizations
+  * added .db to vfile patterns (for pacman)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 26 Dec 2011 16:38:19 +0100
+
+apt-cacher-ng (0.6.10) BETA; urgency=low
+
+  * NEW: option to permit use of custom ports specified in user requests
+  * FIX: don't drop internal uncompressed versions of index files in some cases
+  * Documentation improvements, cosmetic fixes
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 26 Nov 2011 13:09:15 +0100
+
+apt-cacher-ng (0.6.9) ALPHA; urgency=low
+
+  * FIX: always responding with 206 response to valid requests with Range:
+  * FIX: returning the existing data range when Range: goes beyond EOF
+    instead of 416 response
+  * FIX: no attempts to connect to remote server when a range of a cached file
+    is requested and file is incomplete but the range is within available
+    (non-volatile) data
+  * FIX: [acngfs] rewrite of download code (reusing acng components), proper
+    handling of various situations with subsequent chunks, including
+    validation of file state between chunks
+  * FIX: Workaround for internal compiler error with gcc versions before 4.5
+  * more precise time comparison in not-modified check
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 06 Nov 2011 20:16:19 +0100
+
+apt-cacher-ng (0.6.8) BETA; urgency=low
+
+  * NEW: optional TCP filters using libwrap
+  * NEW: added support for Scientific Linux with contribution from Rakhesh
+    Sasidharan (thanks). Includes experimental support for Fedora Core and
+    EPEL (needs more testing, documentation, dedicated expiration code).
+  * NEW: better functions for dealing with many corrupted files
+  * FIX: reading of detached list files with regular expressions for
+    files in DontCache... directives
+  * FIX: allowed download of uncompressed Translation* files 
+  * Documentation improvements, explicit guidelines for search and removal of
+    damaged files lingering in the cache.
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 16 Oct 2011 21:31:58 +0200
+
+apt-cacher-ng (0.6.7) BETA; urgency=low
+
+  * NEW: Debdelta support, precaching can rebuild packages using small diffs
+  * NEW: config option for allowed/prefered protocols for outgoing connections
+  * NEW: more verbosity in expiration and import operations, with details
+    about disk space allocation and expiration period
+  * NEW: allow to keep a number of latest additional versions of .deb packages
+    which are no longer covered by index references
+  * FIX: Close lzma descriptor properly after reading files in expiration runs
+  * Improvement/refactoring of partial mirroring code
+  * Stricter "as needed" mode in partial mirroring, filters also on base names
+    of Debian packages. "Skip index update" also skips download of Release
+    files.
+  * Overhaul of background download/update/patching code, allows HTTP
+    redirection in more cases
+  * Added cleanup controls for index parsing errors
+  * Minor fixes for operation on symlink trees
+  * Portability improvements
+  * Documentation improvements
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 30 Sep 2011 16:05:54 +0200
+
+apt-cacher-ng (0.6.6) BETA; urgency=low
+
+  * NEW: smart detection of architectures which were deliberately removed from
+    a Debian release and implicite expiration of its data
+  * NEW: precaching of Debian/Ubuntu archives can be restricted to packages
+    related to the ones already existing in cache (same storage folder)
+  * FIX: resolve a Circular Wait situation when spare thread setting is low
+    and a single apt client uses a lot of connections and doesn't close them
+    while still waiting for response from the last ones
+  * FIX: on index file update for expiration, if a faulty patch or patch base
+    was present and a replacement file (compressed) was downloaded instead,
+    make sure that the (probably) faulty patch base file is replaced
+  * FIX: correct base path handling with changed order in recent Sources files
+  * [acngfs] Improved connection checking/closing sequence
+  * Changed source compression to XZ
+  * Changed interpretation of the Debug option 
+  * Using plain exit() in termination handler, no need for kludges anymore
+  * Refactoring, minor optimizations on config/index file parsing
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 21 Aug 2011 14:27:10 +0200
+
+apt-cacher-ng (0.6.5) BETA; urgency=low
+
+  * FIX: outgoing connection caching (regression, 0.6.4)
+  * FIX: [acngfs] file type checking crash (regression, 0.4.8)
+  * FIX: [acngfs] interpret and confirm remote disconnects correctly
+  * NEW: [acngfs] local fallback mode - if proxy is not reachable (self-update
+    situation) then file from local directory can be returned
+  * NEW: [acngfs] load FUSE lib via dlopen
+  * NEW: socket pooling policy reviewed, now expiring based on the life state
+    or the hard timeout value
+  * Mirror data update
+  * Improved documentation, including acngfs use case
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 07 Aug 2011 17:39:34 +0200
+
+apt-cacher-ng (0.6.4) ALPHA; urgency=low
+
+  * FIX: big rewrite of downloader state machine (all ugly bits from the
+    first days should be gone now). Also changes connection pooling and
+    related parts and fixes some potential errors.
+  * FIX: avoid unexpected reconnects after HTTP error status code
+    (probably Debian bug #628995)
+  * NEW: mirrors can be accessed on arbitrary TCP port when mapped explicitely
+    in the server config
+  * NEW: support additional flags in the Remap-... declaration
+  * NEW: keyfile=... flag which tells to blacklist a mirror backend
+    immediately when certain files are not available (Debian bug #616091)
+  * cosmetic fixes, don't attempt to read index data from files from the
+    ignore list
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 01 Aug 2011 23:39:20 +0200
+
+apt-cacher-ng (0.6.3) BETA; urgency=medium
+
+  * FIX: big endian detection in the new build system
+  * Mirror data update, Mirrors.masterlist URL update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 14 Jun 2011 22:46:47 +0200
+
+apt-cacher-ng (0.6.2) BETA; urgency=low
+
+  * NEW: optional truncation of damaged files via web interface
+  * FIX: segfault after failed connection attempt in some situations
+  * FIX: consider CXXFLAGS from environment
+  * FIX: compilation with GCC 4.6
+  * FIX: better regexp for mscorefonts installer (closes: LP#755085)
+  * Mirror data update, added cdn.debian.net
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 28 Apr 2011 00:02:34 +0200
+
+apt-cacher-ng (0.6.1) BETA; urgency=low
+
+  * NEW: reusing persistent connection handles between download activities
+  * FIX: in resource cleanup thread: premature termination and unneccessary
+    check cycles in corner cases
+  * Documentation updates
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 28 Mar 2011 00:49:59 +0200
+
+apt-cacher-ng (0.6) BETA; urgency=medium
+
+  * changed default selection type from MD5 to SHA1 in Release file parser 
+  * additional SHA1 checksumming in package import file scaner
+  * added support for InRelease files, considered equal to Release files
+  * ignore vanishing ...diff/Index files if the base file is still present
+  * the cache control header is added automatically for volatile files and not
+    added otherwise; RequestAppendix option is no longer involved
+  * improved robustness of index data state analyzer, preventing hickups
+    with incomplete files
+  * distkill.pl: cares about installer-$ARCH folders
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 26 Feb 2011 16:28:40 +0100
+
+apt-cacher-ng (0.5.14) BETA; urgency=low
+
+  * FIX: potential race in DNS resolution cache, also moved the DNS expiration
+    code to the new cleanup handler
+  * NEW: CMake driven build system revived, replacing the fully custom one
+  * NEW: Solaris port, instructions in INSTALL.solaris
+  * NEW: option to append arbitrary data to request headers, default
+    content contains remote proxy cache control data (closes: #613816)
+  * Documentation improvements, rewrite of Remapping part. Thanks to Gedalya
+    for review and corrections.
+  * Optimized delayed file item release code, faster connection handler start
+  * Dropped deprecated mirror information for Debian archive mirrors
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 18 Feb 2011 23:04:24 +0100
+
+apt-cacher-ng (0.5.13) BETA; urgency=low
+
+  * FIX: lethal race in getaddrinfo/freeaddrinfo in CAddrInfo
+  * FIX: Cygwin workaround and better LZMA detection
+  * NEW: modification of duplicated task execution in the web GUI, added
+    attaching to the log output of the running task
+  * NEW: script execution on connection/disconnection to certain mirrors
+  * Internal rewrite of delayed cleanup task scheduling
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 06 Feb 2011 19:11:54 +0100
+
+apt-cacher-ng (0.5.12) BETA; urgency=low
+
+  * NEW: Partial mirror function (guided precaching)
+  * NEW: Assisted removal of bad index files via web interface
+  * FIX: Decoding URL encoded characters in proxy username/password
+  * FIX: visibility of cruft in main cache directory
+  * Minor optimizations: cancel link when report output starts, less server
+    queries when downloading patch files for internal index file
+    reconstruction, less spam in report outputs, web interface polishing for
+    better readability
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 02 Dec 2010 23:09:33 +0100
+
+apt-cacher-ng (0.5.11) BETA; urgency=low
+
+  * NEW: extended distkill.pl to be more vertisale cleanup tool
+  * FIX: ignore trailing comments in the config files reliably
+  * FIX: setting explicite Content-Length for non-bodyless responses with zero
+    size (Debian bug 603463)
+  * FIX: data passing hiccup with DontCache* options which could also cause
+    internal deadlocks (resource leak). Also making sure that all headers are
+    passed as-is and not modified.
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 18 Nov 2010 22:40:39 +0100
+
+apt-cacher-ng (0.5.10) BETA; urgency=medium
+
+  * FIX: import function (creation of new directories)
+  * little optimizations: less mkdir calls, avoid checksumming
+    of unknown files in the import task, avoid repeated checksumming when
+    files have duplicates
+  * Documentation improvement, better explanation of cache storage failures
+    with solving strategy, disk/ISO data import tricks
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 08 Nov 2010 00:52:56 +0100
+
+apt-cacher-ng (0.5.9) BETA; urgency=low
+
+  * adds a forced delay avoiding repeated remote calls for volatile data
+    updates, minimizing download activity when the client request come within
+    an interval of few seconds (Debian bug #598469)
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 05 Nov 2010 23:50:06 +0100
+
+apt-cacher-ng (0.5.8) BETA; urgency=low
+
+  * Documentation update
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 01 Nov 2010 15:30:54 +0100
+
+apt-cacher-ng (0.5.7) ALPHA; urgency=low
+
+  * total overhaul of index file updating code, superseeding the hurd of
+    minor optimizations invented before:
+    - making the smart update ready for lzma/xz
+    - improved sharing of related files among repositories and distribution
+      branches, to create less file during internal patching
+    - rewritten bzip2 recreation and injecting code, moved the external bzip2
+      command execution to internal operation using libbz2
+    - unified list management to save some memory during expiration
+    - minor import code changes to cope with other modifications
+  * FIX: confusion of expiration code in cases when directory symlinks were
+    set inside the cache, exposed with file injection when Recompbz2 was set
+  * FIX: restored exact Translation-* processing and added proper support for
+    their index files
+  * FIX: strip http:// prefix from proxy username specification
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 20 Oct 2010 18:50:07 +0200
+
+apt-cacher-ng (0.5.6) BETA; urgency=low
+
+  * Disabled auto-scrolling in maintenance pages (incomplete code)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 12 Sep 2010 23:21:09 +0200
+
+apt-cacher-ng (0.5.5) BETA; urgency=low
+
+  * NEW: Added experimental support for pacman downloads (Arch Linux archive)
+  * NEW: Only update index files in expiration or import tasks where index
+    data can eventually be extracted from
+  * FIX: invalid data read while creating HTTP error response headers
+  * FIX: added proper patterns to cover all debian-installer files (to
+    volatile pattern for directories without visible version, static package
+    pattern for directories with visible version)
+  * FIX: apply whitelist pattern to whole whole path and not just filenames
+  * FIX: minor potential bugs
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 12 Sep 2010 22:32:27 +0200
+
+apt-cacher-ng (0.5.4) BETA; urgency=low
+
+  * fixed old thread memory leak
+  * added basic LZMA support using liblzma
+  * not opening volatile files for writting when they were not changed
+  * improved display of error messages in expiration code
+  * minor optimization and improvements of old code
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 29 Aug 2010 15:26:09 +0200
+
+apt-cacher-ng (0.5.3) ALPHA; urgency=low
+
+  * NEW: regular web server mode, mapping of local file system to browsable
+    HTTP directories
+  * FIX: total review & overhaul of the response (job) control, adding more
+    verbose error pages and making code more uniform
+  * FIX: restored chunked transfer mode for open-end jobs
+  * FIX: destruction of metadata of some volatile files during the
+    expiration task despite of being covered by WfilePattern
+  * FIX: various internal fixes and improvements (more user debug output on
+    sensible places, string builder for various purposes inspired
+    by std::ostringstream, passing Location: value for most redirect responses
+    now, weak synchronization protection in some rarely used code
+
+ -- Eduard Bloch <blade@debian.org>  2010-08-26 00:45:20 +0200 (Do, 26. Aug 2010)
+
+apt-cacher-ng (0.5.2) BETA; urgency=low
+
+  * basic support for OpenSUSE archives
+  * improved Cygwin handling
+  * fixed incorrect check which might cause premature removal of .head files
+    belonging to certain files 
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 07 Aug 2010 12:39:31 +0200
+
+apt-cacher-ng (0.5.1) BETA; urgency=low
+
+  * Minor regression fixes: 
+    + correct form parameter sending in maintenance page
+    + printing of regular debug messages with 0 < debugvalue < 6
+  * Cleanup of administrative page preparation code, various HTML format fixes
+    to make them W3C HTML 4.01 compliant. Static pages are now delivered
+    without Chunked transfer encoding, making them better usable for naive
+    HTTP clients like w3m.
+  * Refactoring, code cleanup and unification
+  * Fixes for compilation on Cygwin and *BSD platforms:
+    + more explicit linking checks in build environment configuration
+    + added fallback defaults for linux-specific optimizations
+  * Initial support for Cygwin mirror network, including basic cache
+    expiration methods
+  * Documentation improvements
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 27 Jul 2010 00:14:39 +0200
+
+apt-cacher-ng (0.5) BETA; urgency=medium
+
+  * fixed gracefull disconnection code, now really initiate the connection
+    shutdown (Debian bug #589630)
+  * filter expression change: allow GET parameters for Ubuntu's release
+    announcements
+  * default creation permissions for files and directories now configurable
+    thorugh FilePerms and DirPerms
+  * now respecting umask value in creation permissions (Debian bug #589410)
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 19 Jul 2010 22:43:03 +0200
+
+apt-cacher-ng (0.4.9) BETA; urgency=high
+
+  * Cleanup of LFS related hacks. Now adding format string customization only
+    for present _FILE_OFFSET_BITS and only on non-64bit platforms
+  * Better separation of required/optional/default/additional flags 
+    in the Makefile. Many thanks to "M. Vefa Bicakci" for some hints.
+  * Mirror lists update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 06 Jul 2010 00:05:36 +0200
+
+apt-cacher-ng (0.4.8) BETA; urgency=low
+
+  * Improved debug logging
+  * Pass-through mode (without caching) for URLs identified by
+    regular expressions, specified with DontCache* options
+  * Moved regex compilation to startup time only
+  * Added .ddeb suffix to the static package list
+  * Completed LFS support on 32bit architectures
+  * Removed workarounds for some ancient client problems
+  * Attempt of more gracefull closing of the client socket 
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 02 Jul 2010 08:33:24 +0200
+
+apt-cacher-ng (0.4.7) BETA; urgency=low
+
+  * Added fallback to alternative backends descriptions if the default ones
+    are unusable
+  * Fixed potential socket descriptor leak
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 08 May 2010 22:25:16 +0200
+
+apt-cacher-ng (0.4.6) BETA; urgency=low
+
+  * Added conversion of some URL encoding strings when storing local files
+    Some user might want to urlenconde-fixer.pl (in dry-run or real modes)
+    to check/correct filenames in the local cache directories.
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 10 Mar 2010 22:30:58 +0100
+
+apt-cacher-ng (0.4.5) BETA; urgency=low
+
+  * Implemented basic SOAP-to-BTS pass-through
+  * Typo fix in userinfo.html
+  * moved index and verbosity related option checkboxes in report.html to make
+    clear that they also refer to the import functionality
+  * added example for DnsCacheSeconds option usage (the option itself has
+    existed for ages)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 03 Mar 2010 21:22:26 +0100
+
+apt-cacher-ng (0.4.4) BETA; urgency=low
+
+  * performance tuning of acngfs (especially transfering less data for simple
+    stat calls)
+  * FIX: possible crash with chunked response of some servers, Ubuntu bug#525176
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 21 Feb 2010 21:10:41 +0100
+
+apt-cacher-ng (0.4.3) BETA; urgency=low
+
+  * Support for new dpkg v3 source formats
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 06 Dec 2009 12:21:43 +0100
+
+apt-cacher-ng (0.4.2) BETA; urgency=low
+
+  * Fix build on systems without Linux fallocate support
+  * Documentation format fixes
+  * Mirror database update
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 01 Dec 2009 21:39:49 +0100
+
+apt-cacher-ng (0.4.1) BETA; urgency=low
+
+  * Attempt to remove empty folders on cleanup
+  * Explicite sorting of configuration files before reading them
+  * Some class refactoring
+  * Option to skip header checks on package files in expiration
+  * Passing Location: field through for response codes 301 and 302 
+  * experimental use of fallocate on Linux to improve file storage on ext4
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 22 Nov 2009 13:45:36 +0100
+
+apt-cacher-ng (0.4) BETA; urgency=low
+
+  * FIX: Patch from Alexander Inyukhin fixes a thread leak due to race
+    condition in counting of standby threads
+  * NEW: printing of warnings for deprecated options (also warning on
+    detection of the old Verbose option)
+  * Option changes: MaxSpareThreadSets renamed to MaxStandbyConThreads to
+    explain its purpose better, MaxConThreads (new) can limit maximum number
+    of active connection threads.
+  * code cleanup and refactoring in conserver.cc
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 26 May 2009 00:03:03 +0200
+
+apt-cacher-ng (0.3.12) BETA; urgency=low
+
+  * FIX: ddition or the original URL in error headers
+  * FIX: More checks for EINTR on close() calls
+  * Added retry delay on accept() in case of running out of file handles
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 25 May 2009 00:42:07 +0200
+
+apt-cacher-ng (0.3.11) BETA; urgency=low
+
+  * Added more verbose stats table with cache efficiency percentage
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 09 May 2009 19:31:38 +0200
+
+apt-cacher-ng (0.3.10) BETA; urgency=high
+
+  * Fixed incomplete copy constructor of the fingerprinting class, which broke
+    import function and cache data validation for expiration with checksumming
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 21 Apr 2009 23:51:51 +0200
+
+apt-cacher-ng (0.3.9) BETA; urgency=low
+
+  * Set default expiration whitelist pattern to the same as index file.
+    Otherwise files might be deleted accidentally in some cases since the new
+    code in 0.3.4 works a bit too precisely.
+  * Optional and experimental bz2ing-and-inject code, usable to create
+    compressed versions of some index files
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 21 Apr 2009 23:51:51 +0200
+
+apt-cacher-ng (0.3.8) BETA; urgency=medium
+
+  * Modified connection shutdown handling to work better with clients that
+    don't send Connection: header. The workaround for clients not sending it
+    but still expecting pipelining is now done differently, by detecting a
+    bunch of incoming quries.
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 04 Apr 2009 23:03:16 +0200
+
+apt-cacher-ng (0.3.7) BETA; urgency=high
+
+  * FIX: Stop including debian-volatile versions in RFC-822 formated lists in
+    the incorrect way
+  * FIX: Better checking of URLs in backends definitions, forbid unsupported
+    ones (like ftp://)
+  * Better mirror list generator, now creating separate debian and
+    debian-volatile databases
+  * User-friendly description and extra documentation for busy port situation
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 03 Apr 2009 22:01:03 +0200
+
+apt-cacher-ng (0.3.6) BETA; urgency=low
+
+  * Better state caching in expiration, slightly reducing number of .head file
+    reads and stat calls
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 27 Mar 2009 22:28:12 +0100
+
+apt-cacher-ng (0.3.5) BETA; urgency=low
+
+  * Changed update code for index files to be more tollerant to cache errors
+  * Index updates reports more useful DNS resolution errors
+  * Index file updating code overhaul, now supports updates via Diff files.
+    Currently deliberately restricted to .diff/Index files covered by
+    signatures in "Release" files.
+    NOTE TO USERS: For the few next releases, a temporary OldIndexUpdater
+    config option might be used to switch to the old behaviour. Please report
+    exact symptoms of reproducible errors.
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 26 Mar 2009 22:51:11 +0100
+
+apt-cacher-ng (0.3.4) BETA; urgency=low
+
+  * NEW: optional X-Forwarded-For support, for forwarding (configurable) and
+    for logging (configurable). Thanks to Alexander Bondarenko for Testing.
+  * NEW: support for some http://changelogs.ubuntu.com/ contents
+  * NEW: configurable white list pattern to exclude files from expiration
+  * FIX: corrected X-Original-Source URL
+  * FIX: disabled the IPv4-mapped IPv6 sockets on Linux, now
+    explicitely creating IPv6-only sockets. The automatic IPv4 shadow socket
+    has unwanted effects.
+  * FIX: not sending X-Original-Source on bounces
+  * FIX: rotation and reconnection attempts through available addrinfo sets (i.e.
+    through IPv6/IPv4 protocols) even on late connection failure
+  * FIX: Small code optimizations on expiration code, now always checking
+    plausibility of content length in the server sent information
+  * FIX: sending of malformed proxy request in certain cases (with incomplete
+    proxy URL in the config)
+  * Documentation overhaul, thanks to Andras Korn. Also documented the usage
+    with jigdo, whole Distribution release cleanup, various limitations.
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 10 Mar 2009 22:59:36 +0100
+
+apt-cacher-ng (0.3.3) STABLE; urgency=low
+
+  * GCC 4.4 related fixes (cstdio inclusion)
+  * Info page is now trying to print the compact (IPv4 like) presentation of
+    V4-in-V6 embedded addresses
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 08 Nov 2008 16:07:21 +0100
+
+apt-cacher-ng (0.3.2) STABLE; urgency=low
+
+  * Fixed strict numeric option parsing
+  * No longer tolerating bad options in configuration files
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 13 Oct 2008 21:11:26 +0200
+
+apt-cacher-ng (0.3.1) STABLE; urgency=low
+
+  * expire-caller.pl now correctly reading credentials
+  * consistent use of FD_ZERO, might really solve Debian bug #499539
+  * option to disable download status check in expiration, and optional
+    "ignore list" telling which files are allowed to be not up-to-date
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 12 Oct 2008 12:48:26 +0200
+
+apt-cacher-ng (0.3) STABLE; urgency=low
+
+  * on connection errors, doing more careful cleanup of downloader's
+    file descriptor state (closes Debian bug #499539)
+  * improved error message retrieval for connection errors
+  * CSS style improvements
+  * Added option to force a redownload of volatile files during expiration,
+    also displaying the transfered data counters
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 23 Sep 2008 00:21:40 +0200
+
+apt-cacher-ng (0.2.9) BETA; urgency=high
+
+  * FIX: correcting the reset of retry counter introduced in 0.2.8, needed in
+    some further situations
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 04 Sep 2008 04:20:54 +0200
+
+apt-cacher-ng (0.2.8) BETA; urgency=high
+
+  * Proper detection of expected disconnect condition and carefull work around
+    this situation (Debian bug Bug#497700)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 03 Sep 2008 20:08:30 +0200
+
+apt-cacher-ng (0.2.7) BETA; urgency=low
+
+  * FIX: infinite loop caused by incomplete remote host blacklist check for
+    unmanaged sources (Debian bug #497567)
+  * FIX: double-check the download state in a corner case where sudden
+    connection reset might corrupt file data
+  * FIX: suppress some "not supported" warnings seen on systems with
+    disabled IPv6 support
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 03 Sep 2008 13:29:52 +0200
+
+apt-cacher-ng (0.2.6) BETA; urgency=high
+
+  * FIX: Large scale overhaul of downloader code, much better structured now.
+    Avoids the unneccessary reconnects when using external proxy.
+    More comprehensible code flow, "should" never get into situations like
+    hanging without feedback from downloader (Debian bug #496937) or assigning
+    wrong contents to target files (Debian bug #495350)
+  * FIX: hostname in documentation link on the report page
+  * NEW: trigger button on the control page to not recound statistics on every
+    page loading
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 30 Aug 2008 00:49:32 +0200
+
+apt-cacher-ng (0.2.5) BETA; urgency=high
+
+  * FIX: unsafe buffer memory access in download request queue
+  * internal refactoring
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 10 Aug 2008 22:00:16 +0200
+
+apt-cacher-ng (0.2.4) BETA; urgency=high
+
+  * "Release" filename matching fix, 0.2.3 did ignore the Release files durin
+    Expiration
+  * minor build fixes for users of dash
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 03 Aug 2008 21:13:59 +0200
+
+apt-cacher-ng (0.2.3) BETA; urgency=low
+
+  * FIX: Improved build system
+  * FIX: allowed new files to be created group-writable (only with appropriate
+    setting of umask, of course), unified ownership flag setting
+  * FIX: cleanup and import overhaul. Now supports SHA1 (pdiff files) and
+    imports volatile files. An option for checksum checks on expiration has
+    been added to identify and remove corrupted data
+  * FIX: add support for volatile paths in the mirror list
+
+  * NEW: Abort mechanism for maintenance tasks
+  * NEW: Cygwin port
+  * NEW: glob support where wordexp is not available
+  * NEW: getaddrinfo/getnameinfo emulation where not available
+         (reusing code from APT)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 27 Jul 2008 21:25:05 +0200
+
+apt-cacher-ng (0.2.2) BETA; urgency=medium
+
+  * Some internal refactoring
+  * New expiration option: purge immediately
+  * Fix: 304 headers, apt<->apt-cacher-ng speedup works again
+  * Fix: offline mode, i.e. response headers generation on file miss
+  * Fix: printing of IP adresses in square brackets, needed for IPv6
+  * Fix: printing of days-to-removal for pending file deletions
+  * Fix: purging all matching files in a single cleanup run, i.e. including
+    those shadowed by other files with the same name
+  * Fix: incorrect creation of sparse files in few (unusual) conditions; also
+    made data/header file opening sequences more safe and reliable and
+    added/improved some limited recovery methods
+  * better logging of important cache storage errors
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 17 Jul 2008 23:43:09 +0200
+
+apt-cacher-ng (0.2.1) BETA; urgency=high
+
+  * Fixed request preparation host binding, causing sporadic loss of
+    responses for the user
+  * included limits.h in acbuf.h again (fixing Ubuntu's FTBFS)
+  * Add port to the error examination links in the cron mails
+  * Option parser now accepts = also in config file
+  * local address construction moved to run only on getaddrinfo output, now
+    supports binding on selected interfaces (new option: BindAddress)
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 15 Jul 2008 16:23:58 +0200
+
+apt-cacher-ng (0.2) BETA; urgency=low
+
+  * X-Original-Source sending to user
+  * acngfs fixes, simple precaching on file opening
+  * FIX: range position recalculation in partial response
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 28 Jun 2008 17:15:10 +0200
+
+apt-cacher-ng (0.2pre3) BETA; urgency=low
+
+  * Crash fixes (from the last header changes)
+  * pretty printing of remaining time till expiration
+  * Little internal optimization and refactoring
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 25 Jun 2008 00:32:37 +0200
+
+apt-cacher-ng (0.2pre2) BETA; urgency=low
+
+  * Lots of fixes in range response processing and logging
+  * Logging code summarization to avoid log spamming
+  * FUSE filesystem fixed/rewritten as "acngfs", still experimental
+    (AS IN: NOT FOR DAILY USE)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 22 Jun 2008 14:25:40 +0200
+
+apt-cacher-ng (0.2pre1) BETA; urgency=medium
+
+  * The "Less Is More" pre-release - review/overhaul of internal download job
+    processing
+  * Added jigdo/template/copyright/changelog suffixes to the list (Ubuntu
+    bug#227240)
+  * Updated Ubuntu mirrors list, especially added TLD.archive.ubuntu.com
+    servers not sufficiently described on the net (Ubuntu bug#227733)
+  * Documentation mistake fix (Ubuntu bug#225478)
+  * more EINTR related fixes
+  * Thread and thread pool code review, dropped helper threads 
+
+ -- Eduard Bloch <blade@debian.org>  Tue, 17 Jun 2008 00:04:54 +0200
+
+apt-cacher-ng (0.1.13) BETA; urgency=low
+
+  * Stop applying URL escaping to target file names fetched from indexes
+  * printing more information on "overload" rejects, enabled with Debug option
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 13 Apr 2008 21:54:22 +0200
+
+apt-cacher-ng (0.1.12) BETA; urgency=low
+
+  * Avoid too early closing of connection file descriptor on auth failures
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 20 Mar 2008 02:40:53 +0100
+
+apt-cacher-ng (0.1.11) BETA; urgency=low
+
+  * Automatic guessing of Sources/Packages locations from pdiff file indexes,
+    making the import preparations less painfull
+  * added basic authentication support for admin pages access
+  * various internal fixes
+    + whitelisting of head files for volatile files
+    + proper EINTR handling on some places, based on patch from Jiří Paleček
+  * support reopening log files through SIGUSR1
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 19 Mar 2008 00:56:27 +0100
+
+apt-cacher-ng (0.1.10) unstable; urgency=low
+
+  * filereader.cc: unbreak infinite loop on subtle decompression errors
+  * made use of exceptions configurable (used by default)
+  * parsing of pure URLs in rewrite lists added (based on patch by
+    Tobias Gruetzmacher)
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 06 Feb 2008 00:30:27 +0100
+
+apt-cacher-ng (0.1.9) unstable; urgency=low
+
+  * Identify itself as "Apt-Cacher NG" to the clients
+  * Fixes connection to non-standard proxy tcp ports
+  * Adds some d-i files to the filters
+  * Not stopping threads explicitely in the termination handler, leads to
+    freezes/crashes during application exit()
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 07 Dec 2007 01:01:19 +0100
+
+apt-cacher-ng (0.1.8) unstable; urgency=low
+
+  * Documentation fixes, mentioned workaround for apt-listbugs
+  * Assuming persistent connection for HTTP/1.1 client requests without
+    Connection: field, possible workaround for APT's http client freezes when
+    fetching pdiff files
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 06 Dec 2007 22:07:56 +0100
+
+apt-cacher-ng (0.1.7) unstable; urgency=medium
+
+  * Little internal interface cleanup
+  * Fixes and improvements on download stream processing
+  * Report printing fixed (periods)
+  * Experimental FUSE-based filesystem daemon "mount.acng" to present HTTP
+    accessible files in a local filesystem
+  * Better support for content ranges including little fixes for content
+    ranges on imported files
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 29 Nov 2007 08:58:11 +0100
+
+apt-cacher-ng (0.1.6) unstable; urgency=low
+
+  * Cleanup of dangling .head files in expiration run
+  * Recreation of expiration database or user message on permission problems
+  * Fix: missing slash in some filenames when deleting
+  * Documentation update, detailed explanation on Remap- syntax and its
+    influence on the proxy behaviour
+  * some build system changes to make crosscompilations easier, disable
+    compression and parts of IPv6 support when needed
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 23 Nov 2007 01:31:39 +0100
+
+apt-cacher-ng (0.1.5) unstable; urgency=low
+
+  * User interaction improvements and code cleanup
+  * Printing instructions page when visiting a directory
+  * Better page customization features
+
+ -- Eduard Bloch <blade@debian.org>  Mon, 18 Nov 2007 23:20:22 +0100
+
+apt-cacher-ng (0.1.4) BETA; urgency=low
+
+  * Cleanup and simplification of some Voodoo code in the filesystem walker
+  * Fixed rarely appearing file descriptor leaks in maintenance tasks
+  * Removal of some spammy debug output on the console
+  * Pattern code cleanup, added user customizable file patterns
+  * Automatic version string injection on build
+  * More safe copy method in import code
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 18 Nov 2007 00:14:19 +0100
+
+apt-cacher-ng (0.1.3) BETA; urgency=high
+
+  * Fixed path of the files in cache used in unmanaged downloads
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 17 Nov 2007 17:24:06 +0100
+
+apt-cacher-ng (0.1.2) BETA; urgency=low
+
+  * Fix: using correct peer name buffer in certain cases
+  * Change: use common size of sockaddr_storage in in.acng
+  * Added PDF version of the manual to the tarball
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 16 Nov 2007 21:56:26 +0100
+
+apt-cacher-ng (0.1.1) BETA; urgency=low
+
+  * Fix: double bind with IPv6, switched to use combi sockets (IPv6/IPv4) and
+    getnameinfo usage in the connection server
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 15 Nov 2007 23:56:26 +0100
+
+apt-cacher-ng (0.1) BETA; urgency=low
+
+  * Unix domain socket fixes
+  * Experimental inetd wrapper client
+  * README extended and converted to Halibut format, simple manpage added
+  * Makefile extensions for documentation build
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 10 Nov 2007 00:02:08 +0100
+
+apt-cacher-ng (0.0.10) ALPHA; urgency=low
+
+  * Reworked identification cache map to be more efficient
+  * Fixes of various file descriptor leaks
+  * Fixes for rarely appearing conditions where head files could receive
+    invalid contents
+  * Reworked connection thread management, implemented basic thread pool
+
+ -- Eduard Bloch <blade@debian.org>  Fri, 09 Nov 2007 00:40:40 +0100
+
+apt-cacher-ng (0.0.9) ALPHA; urgency=low
+
+  * Minor bugfixes on hangups in storing stream
+  * Bugfixes in file storage mechanisms (truncation to incorrect size etc.)
+  * Better recovery from error conditions with damaged cache
+  * Lots of code refactoring, cleanup on interfaces
+  * Remapping schemes controllable more exact by user configuration, more
+    relaxed request hostname mapping code
+  * IPv6 server-side support completed
+  * Debian packaging improvements (init script, default config)
+  * main method and helper fixes, making startup behaviour more reliable and
+    more secure
+  * various fixes on import function
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 28 Oct 2007 16:37:45 +0100
+
+apt-cacher-ng (0.0.8) ALPHA; urgency=low
+
+  * Debian packaging, archive cleanup
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 21 Oct 2007 21:09:54 +0200
+
+apt-cacher-ng (0.0.7) ALPHA; urgency=low
+
+  * import function
+  * lots of refactoring
+  * build fixes for i386
+  * various bugfixes, esp. of a memory leak in expiration
+  * user interaction improvements
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 21 Oct 2007 19:55:41 +0200
+
+apt-cacher-ng (0.0.6) ALPHA; urgency=low
+
+  * pdiff.*gz downloadable again
+  * Cleanup functionality working, not armed, needs to be pushed through
+    the web interface
+  * lots of small and big bugfixes
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 14 Oct 2007 21:50:08 +0200
+
+apt-cacher-ng (0.0.5) ALPHA; urgency=low
+
+  * HTML web site service to display the transfer statistics, using a simple
+    template based page customizable by the administrator
+  * Fixed bug in rewrite map reader
+  * Overall code cleanup and refactoring
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 07 Oct 2007 23:24:50 +0200
+
+apt-cacher-ng (0.0.4) ALPHA; urgency=low
+
+  * better zlib/libbz2 detection in CMakeLists.txt (purging the cache by
+    default now unless the problem with stored negative value is fixed)
+  * build rule for static micro version
+  * proper log functionality with raw transfer data accounting
+  * daemon()izing properly
+  * preparation for inetd wrapper and statistics HTML page creation
+  * lots of bugfixes and code cleanup
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 07 Oct 2007 15:20:11 +0200
+
+apt-cacher-ng (0.0.3) ALPHA; urgency=low
+
+  * fixed repeated reconnection in dlcon after first occurence
+  * changed config file reading to a custom class which accepts .gz and .bz2
+    input, using the respective libraries. Boost was "a little" too big.
+  * lots of small bugfixes in command line option parsing
+  * bug system fixes, building a separated debug version
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 06 Oct 2007 23:48:37 +0200
+
+apt-cacher-ng (0.0.2) ALPHA; urgency=low
+
+  * license header cleanup
+  * using BSD original license
+
+ -- Eduard Bloch <blade@debian.org>  Wed, 03 Oct 2007 22:29:18 +0200
+
+apt-cacher-ng (0.0.1) ALPHA; urgency=low
+
+  * rewritten most parts of the prototype from the last year
+  * first release as technical demo
+
+ -- Eduard Bloch <blade@debian.org>  Thu, 04 Oct 2007 01:29:18 +0200

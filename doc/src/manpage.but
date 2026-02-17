@@ -1,0 +1,85 @@
+\title Apt-Cacher-NG User Manual
+
+\cfg{man-identity}{apt-cacher-ng}{8}{November 2007}{apt-cacher-ng}{Eduard Bloch}
+\cfg{man-filename}{apt-cacher-ng.8}
+\cfg{man-mindepth}{1}
+
+\A{manpage} Halibut \cw{man} page
+
+
+\H{manpage-name} NAME
+
+\cw{apt-cacher-ng} \u2013{\u2212{-}} caching proxy for software package downloads
+
+\H{manpage-synopsis} SYNOPSIS
+
+\c apt-cacher-ng [-c confdir] [-h] [optname=optvalue ...]
+
+\H{manpage-description} DESCRIPTION
+
+Apt-Cacher NG is a caching proxy for software packages which are downloaded by
+Unix/Linux system distribution mechanisms from mirror servers accessible via
+HTTP.
+
+\H{manpage-options} OPTIONS
+
+The command-line options supported by \c{apt-cacher-ng} are:
+
+\dt \cw{-c} \e{confdir}
+
+\dd Scan the specified configuration directory and interpret configuration
+  files found there.
+
+\dt \cw{-h}
+
+\dd Short option summary
+
+\dt \cw{-i}
+
+\dd Ignore some non-critical configuration errors on startup. Regular operation with this switch is not recommended.
+
+\dt \cw{-v}
+
+\dd Enable additional verbosity in log output.
+
+\dt \cw{-e}
+
+\dd Invoke expiration task immediately after startup. This option exists for legacy compatibility and can be dangerous to use due to filesystem permission issues (i.e. danger to cause them). Using acngtool to control such operations instead is advisable.
+
+\dt \e{varname=varopt}
+
+\dd The options from the configuration can be passed on the command line as key=value pairs.
+
+\H{cfg} CONFIGURATION
+
+Apt-Cacher NG is configured by a multi-config directory, i.e. the configuration
+is split into many configuration files having names with suffix \e{.conf} and
+stored in a single directory. Variables can override previously configured
+settings from other files, sometimes those settings are merged (depending on the
+variable).
+
+The configuration directory is typically \e{/etc/apt-cacher-ng} but it can be
+adjusted with the -c option (see systemd service file for details or wherever
+the init system starts the daemon).
+
+On Debian systems, there are at least three files installed by default:
+acng.conf (containing documented examples), security.conf (containing sensible
+data and only readable for special users) and zz_debconf.conf (containing
+popular settings which are set by the Debian Configuration mechanism).
+
+\H{manpage-signals} SIGNALS
+
+Only few signals are handled in non-default ways.
+
+\cw{SIGUSR1} closes and reopens log files.
+
+\cw{SIGTERM} and \cw{SIGINT} close log files and stop the daemon.
+
+\H{manpage-more-information} MORE INFORMATION
+
+For more information on Apt-Cacher NG, read the User Manual which can be found
+either in the doc/pdf directory of the software source package or installed in
+the documentation directory of apt-cacher-ng by your distribution.
+
+
+\versionid Eduard Bloch, Thu, 03 Dec 2015 20:57:59 +0100
